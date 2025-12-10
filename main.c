@@ -85,6 +85,8 @@ int main(void) {
 	t_player *player1 = malloc(sizeof(t_player));
 	t_player *player2 = malloc(sizeof(t_player));
 	t_game *game = malloc(sizeof(t_game));
+	int turn = 2;
+	int moved = 0;
 
 	init_game(game);
 	init_player(player1, 1);
@@ -95,10 +97,28 @@ int main(void) {
         ClearBackground(WHITE);
         CreateTable();
 
-		if (IsKeyPressed(KEY_W)) move(game,'w', player2);
-		if (IsKeyPressed(KEY_S)) move(game,'s', player2);
-		if (IsKeyPressed(KEY_A)) move(game,'a', player2);
-		if (IsKeyPressed(KEY_D)) move(game,'d', player2);
+		if(turn == 2 && moved == 0) {
+			if (IsKeyPressed(KEY_W)) {
+				move(game,'w', player2);
+				moved = 1;
+			}
+			if (IsKeyPressed(KEY_S)) {
+				move(game,'s', player2);
+				moved = 1;
+			}
+			if (IsKeyPressed(KEY_A)) {
+				move(game,'a', player2);
+				moved = 1;
+			}
+			if (IsKeyPressed(KEY_D)) {
+				move(game,'d', player2);
+				moved = 1;
+			}
+			if(moved = 1) {
+				//remove_cell(game,player2->x,player2->y);
+			}
+			
+		}
 		change_table(player1);
 		change_table(player2);
         EndDrawing();
