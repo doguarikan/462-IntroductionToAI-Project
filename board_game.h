@@ -7,8 +7,11 @@
 
 typedef struct s_game {
     int **table;
-    int length;
+    int height;
     int width;
+    int cellSize;
+    int spacing;
+    int count;
 } t_game;
 
 typedef struct s_player {
@@ -19,11 +22,11 @@ typedef struct s_player {
     int type;
 }   t_player;
 
-void CreateTable();
+void CreateTable(t_game *game);
 void init_game(t_game *game);
 void init_player(t_player *player, int type);
 void remove_cell(t_game *game, int x, int y);
-int move(t_game *game, char way, t_player *player);
-void change_table(t_player *player);
+int move(t_game *game, char way, t_player *player, t_player *opponent);
+void change_table(t_game *game, t_player *player);
 
 #endif
