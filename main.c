@@ -165,6 +165,7 @@ int main(void) {
         EndDrawing();
     }
 
+    free_game(game, player1, player2);
     CloseWindow();
     return 0;
 }

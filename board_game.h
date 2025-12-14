@@ -28,5 +28,7 @@ void init_player(t_player *player, int type);
 void remove_cell(t_game *game, int x, int y);
 int move(t_game *game, char way, t_player *player, t_player *opponent);
 void change_table(t_game *game, t_player *player);
+int count_valid_moves(t_game *game, t_player *player, t_player *opponent);
+void free_game(t_game *game, t_player *player1, t_player *player2);
 
 #endif

@@ -88,3 +88,39 @@ int move(t_game *game, char way, t_player *player, t_player *opponent) {
     return 1;
 }
 
+int count_valid_moves(t_game *game, t_player *player, t_player *opponent) {
+	int count = 0;
+	int directions[8][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}, 
+	                         {1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
+	
+	for (int i = 0; i < 8; i++) {
+		int nx = player->x + directions[i][0];
+		int ny = player->y + directions[i][1];
+		
+		if (nx < 0 || nx > game->width || ny < 0 || ny > game->height)
+			continue;
+		if (game->table[nx][ny] == -1)
+			continue;
+		if (nx == opponent->x && ny == opponent->y)
+			continue;
+		count++;
+	}
+	return count;
+}
+
+void free_game(t_game *game, t_player *player1, t_player *player2) {
+	if (game && game->table) {
+		for (int i = 0; i < 7; i++) {
+			if (game->table[i])
+				free(game->table[i]);
+		}
+		free(game->table);
+	}
+	if (player1)
+		free(player1);
+	if (player2)
+		free(player2);
+	if (game)
+		free(game);
+}
+
