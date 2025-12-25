@@ -78,7 +78,11 @@ void change_table(t_game *game, t_player *player) {
 	int posX = startX + player->x * game->spacing;
 	int posY = startY + player->y * game->spacing;
 
-	Color color = (player->type == 2) ? RED : BLUE;
+	Color color;
+	if (player->type == 2)
+		color = RED;
+	else
+		color = BLUE;
 	DrawRectangle(posX + 1, posY + 1, game->cellSize - 2, game->cellSize - 2, color);
 }
 
@@ -87,52 +91,55 @@ int main(void) {
 	t_player *player1 = malloc(sizeof(t_player));
 	t_player *player2 = malloc(sizeof(t_player));
 	t_game *game = malloc(sizeof(t_game));
-	int turn = 1; // AI (Player 1) başlar
+	int turn = 1;
 	int moved = 0;
 	int ai_thinking = 0;
+	char ai_best_move = 'w';
+	int ai_best_remove_x = 0;
+	int ai_best_remove_y = 0;
+	int game_over = 0;
+	int winner = 0;
 
 	init_game(game);
-	init_player(player1, 1); // AI - Blue
-	init_player(player2, 2); // Human - Red
+	init_player(player1, 1);
+	init_player(player2, 2);
 
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(WHITE);
         CreateTable(game);
 
-		// AI'ın hamlesi (Player 1 - Blue)
-		if(turn == 1 && moved == 0 && !ai_thinking) {
-			ai_thinking = 1;
-			char best_move = 'w';
-			int best_remove_x = 0;
-			int best_remove_y = 0;
-			
-			// Alpha-beta pruning ile minimax
-			minimax_alpha_beta(game, player1, player2, 3, INT_MIN, INT_MAX, 1, &best_move, &best_remove_x, &best_remove_y);
-			
-			// En iyi hareketi uygula
-			move(game, best_move, player1, player2);
-			moved = 1;
-			ai_thinking = 0;
+		if(turn == 1 && moved == 0 && !ai_thinking && !game_over) {
+			if (count_valid_moves(game, player1, player2) == 0) {
+				game_over = 1;
+				winner = 2;
+			} else {
+				ai_thinking = 1;
+				
+				minimax_alpha_beta(game, player1, player2, 3, INT_MIN, INT_MAX, 1, &ai_best_move, &ai_best_remove_x, &ai_best_remove_y);
+				
+				move(game, ai_best_move, player1, player2);
+				moved = 1;
+				ai_thinking = 0;
+			}
 		}
 		
-		// AI'ın hücre kaldırması
-		if(turn == 1 && moved == 1) {
-			char best_move = 'w';
-			int best_remove_x = 0;
-			int best_remove_y = 0;
-			
-			// En iyi kaldırma hücresini bul
-			minimax_alpha_beta(game, player1, player2, 3, INT_MIN, INT_MAX, 1, &best_move, &best_remove_x, &best_remove_y);
-			
-			// Hücreyi kaldır
-			remove_cell(game, best_remove_x, best_remove_y);
-			turn = 2;
-			moved = 0;
+		if(turn == 1 && moved == 1 && !game_over) {
+			remove_cell(game, ai_best_remove_x, ai_best_remove_y);
+			if (count_valid_moves(game, player2, player1) == 0) {
+				game_over = 1;
+				winner = 1;
+			} else {
+				turn = 2;
+				moved = 0;
+			}
 		}
 
-		if(turn == 2 && moved == 0) {
-			if (IsKeyPressed(KEY_W)) {
+		if(turn == 2 && moved == 0 && !game_over) {
+			if (count_valid_moves(game, player2, player1) == 0) {
+				game_over = 1;
+				winner = 1;
+			} else if (IsKeyPressed(KEY_W)) {
 				if (move(game,'w', player2, player1))
 					moved = 1;
 			}
@@ -166,8 +173,7 @@ int main(void) {
 			}
 		}
 		
-		// Human'ın hücre kaldırması
-		if(turn == 2 && moved == 1) {
+		if(turn == 2 && moved == 1 && !game_over) {
 			Vector2 mousePos = GetMousePosition();
 			int grid = game->cellSize + game->spacing * (game->count - 1);
 			int startX = (GetScreenWidth() - grid) / 2;
@@ -184,8 +190,13 @@ int main(void) {
 							!(col == player1->x && row == player1->y) &&
 							!(col == player2->x && row == player2->y)) {
 							remove_cell(game, col, row);
-							turn = 1; // AI'ya geri dön
-							moved = 0;
+							if (count_valid_moves(game, player1, player2) == 0) {
+								game_over = 1;
+								winner = 2;
+							} else {
+								turn = 1;
+								moved = 0;
+							}
 						}
 					}
 				}
@@ -194,6 +205,30 @@ int main(void) {
 		
 		change_table(game, player1);
 		change_table(game, player2);
+		
+		if (game_over) {
+			const char *winner_text;
+			Color winner_color;
+			if (winner == 1) {
+				winner_text = "AI (Blue) Wins!";
+				winner_color = BLUE;
+			} else {
+				winner_text = "Human (Red) Wins!";
+				winner_color = RED;
+			}
+			
+			int grid = game->cellSize + game->spacing * (game->count - 1);
+			int startX = (GetScreenWidth() - grid) / 2;
+			int startY = (GetScreenHeight() - grid) / 2;
+			
+			int fontSize = 40;
+			int textWidth = MeasureText(winner_text, fontSize);
+			int x = startX + (grid - textWidth) / 2;
+			int y = startY - fontSize - 30;
+			
+			DrawText(winner_text, x, y, fontSize, winner_color);
+		}
+		
         EndDrawing();
     }
 
