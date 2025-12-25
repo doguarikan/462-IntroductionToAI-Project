@@ -82,23 +82,54 @@ void change_table(t_game *game, t_player *player) {
 	DrawRectangle(posX + 1, posY + 1, game->cellSize - 2, game->cellSize - 2, color);
 }
 
-
 int main(void) {
     InitWindow(800, 800, "Strategic Board Game");
 	t_player *player1 = malloc(sizeof(t_player));
 	t_player *player2 = malloc(sizeof(t_player));
 	t_game *game = malloc(sizeof(t_game));
-	int turn = 2;
+	int turn = 1; // AI (Player 1) başlar
 	int moved = 0;
+	int ai_thinking = 0;
 
 	init_game(game);
-	init_player(player1, 1);
-	init_player(player2, 2);
+	init_player(player1, 1); // AI - Blue
+	init_player(player2, 2); // Human - Red
 
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(WHITE);
         CreateTable(game);
+
+		// AI'ın hamlesi (Player 1 - Blue)
+		if(turn == 1 && moved == 0 && !ai_thinking) {
+			ai_thinking = 1;
+			char best_move = 'w';
+			int best_remove_x = 0;
+			int best_remove_y = 0;
+			
+			// Alpha-beta pruning ile minimax
+			minimax_alpha_beta(game, player1, player2, 3, INT_MIN, INT_MAX, 1, &best_move, &best_remove_x, &best_remove_y);
+			
+			// En iyi hareketi uygula
+			move(game, best_move, player1, player2);
+			moved = 1;
+			ai_thinking = 0;
+		}
+		
+		// AI'ın hücre kaldırması
+		if(turn == 1 && moved == 1) {
+			char best_move = 'w';
+			int best_remove_x = 0;
+			int best_remove_y = 0;
+			
+			// En iyi kaldırma hücresini bul
+			minimax_alpha_beta(game, player1, player2, 3, INT_MIN, INT_MAX, 1, &best_move, &best_remove_x, &best_remove_y);
+			
+			// Hücreyi kaldır
+			remove_cell(game, best_remove_x, best_remove_y);
+			turn = 2;
+			moved = 0;
+		}
 
 		if(turn == 2 && moved == 0) {
 			if (IsKeyPressed(KEY_W)) {
@@ -135,6 +166,7 @@ int main(void) {
 			}
 		}
 		
+		// Human'ın hücre kaldırması
 		if(turn == 2 && moved == 1) {
 			Vector2 mousePos = GetMousePosition();
 			int grid = game->cellSize + game->spacing * (game->count - 1);
@@ -152,7 +184,7 @@ int main(void) {
 							!(col == player1->x && row == player1->y) &&
 							!(col == player2->x && row == player2->y)) {
 							remove_cell(game, col, row);
-							turn = 1;
+							turn = 1; // AI'ya geri dön
 							moved = 0;
 						}
 					}
