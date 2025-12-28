@@ -1,7 +1,7 @@
 #include "board_game.h"
 
 void remove_cell(t_game *game, int x, int y) {
-	if (x < 0 || x > 6 || y < 0 || y > 6)
+	if (x < 0 || x > BOARD_MAX_INDEX || y < 0 || y > BOARD_MAX_INDEX)
 		return;
 	if (game->table[x][y] == -1)
 		return;
@@ -110,7 +110,7 @@ int count_valid_moves(t_game *game, t_player *player, t_player *opponent) {
 
 void free_game(t_game *game, t_player *player1, t_player *player2) {
 	if (game && game->table) {
-		for (int i = 0; i < 7; i++) {
+		for (int i = 0; i < BOARD_SIZE; i++) {
 			if (game->table[i])
 				free(game->table[i]);
 		}

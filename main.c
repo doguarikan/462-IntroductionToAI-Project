@@ -1,18 +1,17 @@
 #include "board_game.h"
 
 void init_game(t_game *game) {
-	game->table = malloc(sizeof(int *) * 7);
-	for(int i = 0; i < 7; i++) {
-		game->table[i] = malloc(sizeof(int) * 7);
-		for(int j = 0; j < 7; j++) {
+	game->table = malloc(sizeof(int *) * BOARD_SIZE);
+	for(int i = 0; i < BOARD_SIZE; i++) {
+		game->table[i] = malloc(sizeof(int) * BOARD_SIZE);
+		for(int j = 0; j < BOARD_SIZE; j++)
 			game->table[i][j] = 0;
-		}
 	}
-	game->height = 6;
-	game->width = 6;
-	game->cellSize = 70;
-	game->spacing = 70;
-	game->count = 7;
+	game->height = BOARD_MAX_INDEX;
+	game->width = BOARD_MAX_INDEX;
+	game->cellSize = CELL_SIZE;
+	game->spacing = SPACING;
+	game->count = BOARD_SIZE;
 }
 
 void init_player(t_player *player, int type) {
@@ -25,9 +24,9 @@ void init_player(t_player *player, int type) {
 	}
 	else {
 		player->startX = 3;
-		player->startY = 6;
+		player->startY = BOARD_MAX_INDEX;
 		player->x = 3;
-		player->y = 6;
+		player->y = BOARD_MAX_INDEX;
 		player->type = 2;
 	}
 }
@@ -87,7 +86,7 @@ void change_table(t_game *game, t_player *player) {
 }
 
 int main(void) {
-    InitWindow(800, 800, "Strategic Board Game");
+    InitWindow(800, 800, "Board Game");
 	t_player *player1 = malloc(sizeof(t_player));
 	t_player *player2 = malloc(sizeof(t_player));
 	t_game *game = malloc(sizeof(t_game));
@@ -184,7 +183,7 @@ int main(void) {
 				int col = (mousePos.x - startX) / game->spacing;
 				int row = (mousePos.y - startY) / game->spacing;
 				
-				if (col >= 0 && col < 7 && row >= 0 && row < 7) {
+				if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
 					if (IsKeyPressed(KEY_SPACE)) {
 						if (game->table[col][row] != -1 &&
 							!(col == player1->x && row == player1->y) &&

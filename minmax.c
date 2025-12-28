@@ -10,8 +10,8 @@ void copy_game_state(t_game *dest, t_game *src, t_player *p1_dest, t_player *p1_
 	dest->spacing = src->spacing;
 	dest->count = src->count;
 
-	for (int i = 0; i < 7; i++) {
-		for (int j = 0; j < 7; j++)
+	for (int i = 0; i < BOARD_SIZE; i++) {
+		for (int j = 0; j < BOARD_SIZE; j++)
 			dest->table[i][j] = src->table[i][j];
 	}
 
@@ -51,8 +51,8 @@ void get_valid_move_directions(t_game *game, t_player *player, t_player *opponen
 
 void get_valid_remove_cells(t_game *game, t_player *p1, t_player *p2, int cells[][2], int *count) {
 	int n = 0;
-	for (int x = 0; x < 7; x++) {
-		for (int y = 0; y < 7; y++) {
+	for (int x = 0; x < BOARD_SIZE; x++) {
+		for (int y = 0; y < BOARD_SIZE; y++) {
 			if (game->table[x][y] == -1)
 				continue;
 			if ((p1 && x == p1->x && y == p1->y) || (p2 && x == p2->x && y == p2->y))
@@ -112,9 +112,9 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 		
 		for (int m = 0; m < move_cnt; m++) {
 			t_game temp_game;
-			temp_game.table = malloc(sizeof(int *) * 7);
-			for (int i = 0; i < 7; i++)
-				temp_game.table[i] = malloc(sizeof(int) * 7);
+			temp_game.table = malloc(sizeof(int *) * BOARD_SIZE);
+			for (int i = 0; i < BOARD_SIZE; i++)
+				temp_game.table[i] = malloc(sizeof(int) * BOARD_SIZE);
 
 			t_player temp_ai, temp_human;
 			copy_game_state(&temp_game, game, &temp_ai, ai, &temp_human, human);
@@ -127,9 +127,9 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 			
 			for (int r = 0; r < remove_cnt; r++) {
 				t_game temp_game2;
-				temp_game2.table = malloc(sizeof(int *) * 7);
-				for (int i = 0; i < 7; i++)
-					temp_game2.table[i] = malloc(sizeof(int) * 7);
+				temp_game2.table = malloc(sizeof(int *) * BOARD_SIZE);
+				for (int i = 0; i < BOARD_SIZE; i++)
+					temp_game2.table[i] = malloc(sizeof(int) * BOARD_SIZE);
 
 				t_player temp_ai2, temp_human2;
 				copy_game_state(&temp_game2, &temp_game, &temp_ai2, &temp_ai, &temp_human2, &temp_human);
@@ -138,7 +138,7 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 				
 				int eval = minimax_alpha_beta(&temp_game2, &temp_ai2, &temp_human2, depth - 1, alpha, beta, 0, NULL, NULL, NULL);
 				
-				for (int i = 0; i < 7; i++)
+				for (int i = 0; i < BOARD_SIZE; i++)
 					free(temp_game2.table[i]);
 				free(temp_game2.table);
 				
@@ -157,7 +157,7 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 					break;
 			}
 			
-			for (int i = 0; i < 7; i++)
+			for (int i = 0; i < BOARD_SIZE; i++)
 				free(temp_game.table[i]);
 			free(temp_game.table);
 			
@@ -173,9 +173,9 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 		
 		for (int m = 0; m < move_cnt; m++) {
 			t_game temp_game;
-			temp_game.table = malloc(sizeof(int *) * 7);
-			for (int i = 0; i < 7; i++)
-				temp_game.table[i] = malloc(sizeof(int) * 7);
+			temp_game.table = malloc(sizeof(int *) * BOARD_SIZE);
+			for (int i = 0; i < BOARD_SIZE; i++)
+				temp_game.table[i] = malloc(sizeof(int) * BOARD_SIZE);
 
 			t_player temp_ai, temp_human;
 			copy_game_state(&temp_game, game, &temp_ai, ai, &temp_human, human);
@@ -188,9 +188,9 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 			
 			for (int r = 0; r < remove_cnt; r++) {
 				t_game temp_game2;
-				temp_game2.table = malloc(sizeof(int *) * 7);
-				for (int i = 0; i < 7; i++)
-					temp_game2.table[i] = malloc(sizeof(int) * 7);
+				temp_game2.table = malloc(sizeof(int *) * BOARD_SIZE);
+				for (int i = 0; i < BOARD_SIZE; i++)
+					temp_game2.table[i] = malloc(sizeof(int) * BOARD_SIZE);
 
 				t_player temp_ai2, temp_human2;
 				copy_game_state(&temp_game2, &temp_game, &temp_ai2, &temp_ai, &temp_human2, &temp_human);
@@ -199,7 +199,7 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 				
 				int eval = minimax_alpha_beta(&temp_game2, &temp_ai2, &temp_human2, depth - 1, alpha, beta, 1, NULL, NULL, NULL);
 				
-				for (int i = 0; i < 7; i++)
+				for (int i = 0; i < BOARD_SIZE; i++)
 					free(temp_game2.table[i]);
 				free(temp_game2.table);
 				
@@ -211,7 +211,7 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 					break;
 			}
 			
-			for (int i = 0; i < 7; i++)
+			for (int i = 0; i < BOARD_SIZE; i++)
 				free(temp_game.table[i]);
 			free(temp_game.table);
 			
