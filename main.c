@@ -1,5 +1,6 @@
 #include "board_game.h"
 
+/* Initialize game board and allocate memory */
 void init_game(t_game *game) {
 	game->table = malloc(sizeof(int *) * BOARD_SIZE);
 	for(int i = 0; i < BOARD_SIZE; i++) {
@@ -14,6 +15,7 @@ void init_game(t_game *game) {
 	game->count = BOARD_SIZE;
 }
 
+/* Initialize player starting position */
 void init_player(t_player *player, int type) {
 	if(type == 1) {
 		player->startX = 3;
@@ -31,14 +33,17 @@ void init_player(t_player *player, int type) {
 	}
 }
 
+/* Draw the game board with grid lines and coordinate labels */
 void CreateTable(t_game *game) {
     int grid = game->cellSize + game->spacing * (game->count - 1);
     int startX = (GetScreenWidth() - grid) / 2;
     int startY = (GetScreenHeight() - grid) / 2;
 	int fontSize = 20;
 
+    /* Draw cells */
     for (int i = 0; i < game->count; i++) {
         for (int j = 0; j < game->count; j++) {
+			/* Removed cells shown as dark gray */
 			if (game->table[i][j] == -1) {
 				int posX = startX + i * game->spacing;
 				int posY = startY + j * game->spacing;
@@ -48,6 +53,7 @@ void CreateTable(t_game *game) {
 		}
     }
 
+	/* Draw column numbers */
 	for (int i = 0; i < game->count; i++) {
 		char num[2];
 		int n = i + 1;
@@ -60,6 +66,7 @@ void CreateTable(t_game *game) {
 		DrawText(num, x, y, fontSize, BLACK);
 	}
 	
+	/* Draw row letters */
 	for (int j = 0; j < game->count; j++) {
 		char letter[2] = { 'A' + j, '\0' };
 		int textW = MeasureText(letter, fontSize);
@@ -69,6 +76,7 @@ void CreateTable(t_game *game) {
 	}
 }
 
+/* Draw player on the board */
 void change_table(t_game *game, t_player *player) {
 	int grid = game->cellSize + game->spacing * (game->count - 1);
 	int startX = (GetScreenWidth() - grid) / 2;
@@ -87,11 +95,13 @@ void change_table(t_game *game, t_player *player) {
 
 int main(void) {
     InitWindow(800, 800, "Board Game");
+	
 	t_player *player1 = malloc(sizeof(t_player));
 	t_player *player2 = malloc(sizeof(t_player));
 	t_game *game = malloc(sizeof(t_game));
-	int turn = 1;
-	int moved = 0;
+	
+	int turn = 1;           /* 1 = AI, 2 = Human */
+	int moved = 0;          /* 0 = move, 1 = remove cell */
 	int ai_thinking = 0;
 	char ai_best_move = 'w';
 	int ai_best_remove_x = 0;
@@ -108,21 +118,22 @@ int main(void) {
         ClearBackground(WHITE);
         CreateTable(game);
 
+		/* AI Turn - Move */
 		if(turn == 1 && moved == 0 && !ai_thinking && !game_over) {
 			if (count_valid_moves(game, player1, player2) == 0) {
 				game_over = 1;
 				winner = 2;
 			} else {
 				ai_thinking = 1;
-				
+				/* AI calculates best move using minimax */
 				minimax_alpha_beta(game, player1, player2, 3, INT_MIN, INT_MAX, 1, &ai_best_move, &ai_best_remove_x, &ai_best_remove_y);
-				
 				move(game, ai_best_move, player1, player2);
 				moved = 1;
 				ai_thinking = 0;
 			}
 		}
 		
+		/* AI Turn - Remove cell */
 		if(turn == 1 && moved == 1 && !game_over) {
 			remove_cell(game, ai_best_remove_x, ai_best_remove_y);
 			if (count_valid_moves(game, player2, player1) == 0) {
@@ -134,6 +145,7 @@ int main(void) {
 			}
 		}
 
+		/* Human Turn - Move */
 		if(turn == 2 && moved == 0 && !game_over) {
 			if (count_valid_moves(game, player2, player1) == 0) {
 				game_over = 1;
@@ -172,18 +184,22 @@ int main(void) {
 			}
 		}
 		
+		/* Human Turn - Remove cell */
 		if(turn == 2 && moved == 1 && !game_over) {
 			Vector2 mousePos = GetMousePosition();
 			int grid = game->cellSize + game->spacing * (game->count - 1);
 			int startX = (GetScreenWidth() - grid) / 2;
 			int startY = (GetScreenHeight() - grid) / 2;
 			
+			/* Check if mouse is on board */
 			if (mousePos.x >= startX && mousePos.x < startX + grid &&
 				mousePos.y >= startY && mousePos.y < startY + grid) {
+				/* Convert mouse position to board coordinates */
 				int col = (mousePos.x - startX) / game->spacing;
 				int row = (mousePos.y - startY) / game->spacing;
 				
 				if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
+					/* Press SPACE to remove cell */
 					if (IsKeyPressed(KEY_SPACE)) {
 						if (game->table[col][row] != -1 &&
 							!(col == player1->x && row == player1->y) &&

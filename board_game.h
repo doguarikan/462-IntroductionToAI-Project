@@ -11,6 +11,7 @@
 #define CELL_SIZE 70
 #define SPACING 70
 
+/* Game structure holding board state */
 typedef struct s_game {
     int **table;
     int height;
@@ -20,6 +21,7 @@ typedef struct s_game {
     int count;
 } t_game;
 
+/* Player structure */
 typedef struct s_player {
     int startX;
     int startY;
@@ -41,7 +43,7 @@ void free_game(t_game *game, t_player *player1, t_player *player2);
 void copy_game_state(t_game *dest, t_game *src, t_player *p1_dest, t_player *p1_src, t_player *p2_dest, t_player *p2_src);
 void get_valid_move_directions(t_game *game, t_player *player, t_player *opponent, char moves[8], int *count);
 void get_valid_remove_cells(t_game *game, t_player *p1, t_player *p2, int cells[][2], int *count);
-int evaluate(t_game *game, t_player *player, t_player *opponent);
-int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, int alpha, int beta, int maximizing, char *best_move, int *best_remove_x, int *best_remove_y);
+int evaluate(t_game *game, t_player *player, t_player *opponent);  /* Evaluate position: mobility + center control */
+int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, int alpha, int beta, int maximizing, char *best_move, int *best_remove_x, int *best_remove_y);  /* AI decision making with alpha-beta pruning */
 
 #endif

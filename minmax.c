@@ -1,5 +1,6 @@
 #include "board_game.h"
 
+/* Copy entire game state for AI simulation*/
 void copy_game_state(t_game *dest, t_game *src, t_player *p1_dest, t_player *p1_src, t_player *p2_dest, t_player *p2_src) {
 	if (!dest || !src)
 		return;
@@ -21,6 +22,7 @@ void copy_game_state(t_game *dest, t_game *src, t_player *p1_dest, t_player *p1_
 		*p2_dest = *p2_src;
 }
 
+/* Get all valid move directions for a player*/
 void get_valid_move_directions(t_game *game, t_player *player, t_player *opponent, char moves[8], int *count) {
 	static const int dirs[8][2] = {
 		{0, -1}, {0, 1}, {-1, 0}, {1, 0},
@@ -49,6 +51,7 @@ void get_valid_move_directions(t_game *game, t_player *player, t_player *opponen
 		*count = n;
 }
 
+/* Get all cells that can be removed*/
 void get_valid_remove_cells(t_game *game, t_player *p1, t_player *p2, int cells[][2], int *count) {
 	int n = 0;
 	for (int x = 0; x < BOARD_SIZE; x++) {
@@ -69,22 +72,37 @@ void get_valid_remove_cells(t_game *game, t_player *p1, t_player *p2, int cells[
 		*count = n;
 }
 
+/* Evaluate board position for AI
+   Considers mobility and center control */
 int evaluate(t_game *game, t_player *ai, t_player *human) {
 	int ai_moves = count_valid_moves(game, ai, human);
 	int human_moves = count_valid_moves(game, human, ai);
 	
+	/* Terminal states */
 	if (ai_moves == 0)
-		return -10000;
+		return -10000;  /* AI loses */
 	if (human_moves == 0)
-		return 10000;
+		return 10000;   /* AI wins */
 	
-	return ai_moves - human_moves;
+	/* Mobility: more moves = better */
+	int mobility_score = (ai_moves - human_moves) * 100;
+	
+	/* Position: closer to center = better */
+	int center = BOARD_SIZE / 2;
+	int ai_center_dist = abs(ai->x - center) + abs(ai->y - center);
+	int human_center_dist = abs(human->x - center) + abs(human->y - center);
+	int position_score = (human_center_dist - ai_center_dist) * 10;
+	
+	return mobility_score + position_score;
 }
 
+/* Minimax algorithm with alpha-beta pruning for AI decision making
+   Searches game tree to find best move and cell to remove */
 int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, int alpha, int beta, int maximizing, char *best_move, int *best_remove_x, int *best_remove_y) {
 	if (depth == 0)
 		return evaluate(game, ai, human);
 	
+	/* Set current player based on turn */
 	t_player *current_player;
 	t_player *opponent;
 	if (maximizing) {
@@ -95,6 +113,7 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 		opponent = ai;
 	}
 	
+	/* Check for game over */
 	int move_count;
 	get_valid_move_directions(game, current_player, opponent, NULL, &move_count);
 	if (move_count == 0) {
@@ -104,12 +123,14 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 			return 10000;
 	}
 	
+	/* Maximizing player (AI) */
 	if (maximizing) {
 		int max_eval = INT_MIN;
 		char valid_moves[8];
 		int move_cnt;
 		get_valid_move_directions(game, ai, human, valid_moves, &move_cnt);
 		
+		/* Try each possible move */
 		for (int m = 0; m < move_cnt; m++) {
 			t_game temp_game;
 			temp_game.table = malloc(sizeof(int *) * BOARD_SIZE);
@@ -119,12 +140,15 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 			t_player temp_ai, temp_human;
 			copy_game_state(&temp_game, game, &temp_ai, ai, &temp_human, human);
 			
+			/* Simulate move */
 			move(&temp_game, valid_moves[m], &temp_ai, &temp_human);
 			
+			/* Get possible cells to remove */
 			int remove_cells[49][2];
 			int remove_cnt;
 			get_valid_remove_cells(&temp_game, &temp_ai, &temp_human, remove_cells, &remove_cnt);
 			
+			/* Try each cell removal */
 			for (int r = 0; r < remove_cnt; r++) {
 				t_game temp_game2;
 				temp_game2.table = malloc(sizeof(int *) * BOARD_SIZE);
@@ -134,14 +158,18 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 				t_player temp_ai2, temp_human2;
 				copy_game_state(&temp_game2, &temp_game, &temp_ai2, &temp_ai, &temp_human2, &temp_human);
 				
+				/* Simulate cell removal */
 				remove_cell(&temp_game2, remove_cells[r][0], remove_cells[r][1]);
 				
+				/* Recursive evaluation */
 				int eval = minimax_alpha_beta(&temp_game2, &temp_ai2, &temp_human2, depth - 1, alpha, beta, 0, NULL, NULL, NULL);
 				
+				/* Clean up */
 				for (int i = 0; i < BOARD_SIZE; i++)
 					free(temp_game2.table[i]);
 				free(temp_game2.table);
 				
+				/* Update best move */
 				if (eval > max_eval) {
 					max_eval = eval;
 					if (best_move && best_remove_x && best_remove_y) {
@@ -151,6 +179,7 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 					}
 				}
 				
+				/* Alpha-beta pruning */
 				if (alpha < eval)
 					alpha = eval;
 				if (beta <= alpha)
@@ -166,12 +195,15 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 		}
 		return max_eval;
 	} else {
+		/* Minimizing player (Human) */
 		int min_eval = INT_MAX;
 		char valid_moves[8];
 		int move_cnt;
 		get_valid_move_directions(game, human, ai, valid_moves, &move_cnt);
 		
+		/* Try each possible move */
 		for (int m = 0; m < move_cnt; m++) {
+			/* Create temp game */
 			t_game temp_game;
 			temp_game.table = malloc(sizeof(int *) * BOARD_SIZE);
 			for (int i = 0; i < BOARD_SIZE; i++)
@@ -180,12 +212,14 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 			t_player temp_ai, temp_human;
 			copy_game_state(&temp_game, game, &temp_ai, ai, &temp_human, human);
 			
+			/* Simulate move */
 			move(&temp_game, valid_moves[m], &temp_human, &temp_ai);
 			
 			int remove_cells[49][2];
 			int remove_cnt;
 			get_valid_remove_cells(&temp_game, &temp_ai, &temp_human, remove_cells, &remove_cnt);
 			
+			/* Try each cell removal */
 			for (int r = 0; r < remove_cnt; r++) {
 				t_game temp_game2;
 				temp_game2.table = malloc(sizeof(int *) * BOARD_SIZE);
@@ -195,16 +229,21 @@ int minimax_alpha_beta(t_game *game, t_player *ai, t_player *human, int depth, i
 				t_player temp_ai2, temp_human2;
 				copy_game_state(&temp_game2, &temp_game, &temp_ai2, &temp_ai, &temp_human2, &temp_human);
 				
+				/* Simulate cell removal */
 				remove_cell(&temp_game2, remove_cells[r][0], remove_cells[r][1]);
 				
+				/* Recursive evaluation */
 				int eval = minimax_alpha_beta(&temp_game2, &temp_ai2, &temp_human2, depth - 1, alpha, beta, 1, NULL, NULL, NULL);
 				
+				/* Clean up */
 				for (int i = 0; i < BOARD_SIZE; i++)
 					free(temp_game2.table[i]);
 				free(temp_game2.table);
 				
+				/* Update minimum */
 				if (min_eval > eval)
 					min_eval = eval;
+				/* Alpha-beta pruning */
 				if (beta > eval)
 					beta = eval;
 				if (beta <= alpha)
